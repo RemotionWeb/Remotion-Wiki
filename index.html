@@ -2,24 +2,61 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <title>Remotion Wiki</title>
+  <title>Remotion Wiki – automatisk oversikt</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; }
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
     h1 { color: #222; }
     ul { list-style: none; padding: 0; }
-    li { margin: 0.5rem 0; }
+    li { margin: 0.4rem 0; }
     a { text-decoration: none; color: #0066cc; }
     a:hover { text-decoration: underline; }
+    .loading { color: #888; }
   </style>
 </head>
 <body>
   <h1>Remotion Wiki</h1>
-  <p>Velg en side:</p>
-  <ul>
-    <li><a href="side1.html">Side 1</a></li>
-    <li><a href="side2.html">Side 2</a></li>
-    <li><a href="mappe/side3.html">Side 3</a></li>
-    <!-- legg til alle html-filene dine her -->
+  <p>Denne siden lister automatisk alle HTML-filer i repoet:</p>
+  <ul id="file-list">
+    <li class="loading">Laster filer…</li>
   </ul>
+
+  <script>
+    async function loadFiles() {
+      const user = "RemotionWeb";   // GitHub-brukernavn/org
+      const repo = "Remotion-Wiki"; // Repo-navn
+      const branch = "main";        // Branch-navn (endre hvis du bruker noe annet)
+
+      const url = `https://api.github.com/repos/${user}/${repo}/git/trees/${branch}?recursive=1`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const files = data.tree
+          .filter(item => item.path.endsWith(".html") && item.type === "blob" && item.path !== "index.html")
+          .map(item => item.path);
+
+        const list = document.getElementById("file-list");
+        list.innerHTML = "";
+
+        if (files.length === 0) {
+          list.innerHTML = "<li>Ingen HTML-filer funnet.</li>";
+        } else {
+          files.forEach(path => {
+            const li = document.createElement("li");
+            const link = document.createElement("a");
+            link.href = path;
+            link.textContent = path;
+            li.appendChild(link);
+            list.appendChild(li);
+          });
+        }
+      } catch (e) {
+        document.getElementById("file-list").innerHTML =
+          "<li>Kunne ikke laste filer fra GitHub API.</li>";
+      }
+    }
+
+    loadFiles();
+  </script>
 </body>
 </html>
